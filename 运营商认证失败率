@@ -1,0 +1,15 @@
+-- 运营商认证、失败、失败率（两天对比）
+SELECT now() 时间
+       ,count(DISTINCT case when gmt_mobile is not null then user_id end) 运营商认证数
+       ,count(DISTINCT case when gmt_mobile is not null and mobile_status in(-1) then user_id end) 运营商失败数
+       ,count(DISTINCT case when gmt_mobile is not null and mobile_status in(-1) then user_id end)/count(DISTINCT case when gmt_mobile is not null then user_id end) 运营商失败率
+from lsd_user_auth
+where gmt_mobile>=CURRENT_DATE
+union ALL 
+SELECT date_sub(now(), INTERVAL 1 DAY) 时间
+       ,count(DISTINCT case when gmt_mobile is not null then user_id end) 运营商认证数
+       ,count(DISTINCT case when gmt_mobile is not null and mobile_status in(-1) then user_id end) 运营商失败数
+       ,count(DISTINCT case when gmt_mobile is not null and mobile_status in(-1) then user_id end)/count(DISTINCT case when gmt_mobile is not null then user_id end) 运营商失败率
+from lsd_user_auth
+where gmt_mobile<=date_sub(now(), INTERVAL 1 DAY) 
+      and gmt_mobile>=CURRENT_DATE-1
