@@ -1,0 +1,19 @@
+-- 浦发银行维护的用户push名单
+select distinct(t1.user_id )
+from 
+
+(
+    select user_id 
+    from lsd_borrow_cash
+    where status =5 
+    )t1
+join 
+(
+    -- 主卡为银行的用户
+    select user_id
+    from lsd_user_bankcard
+    where  status = 1
+    and bank_name like '上海浦东发展银行'
+    ) t2
+on t1.user_id = t2.user_id 
+;
