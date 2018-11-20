@@ -1,0 +1,43 @@
+-- 外呼名单：注册未登录、登录未认证、强风控通过未发起借款
+-- 注册未登录每周五10点跑
+select id,user_name,'注册未登录' 状态,gmt_create 时间,date(now()) 获取时间
+from lsd_user
+where gmt_create between str_to_date(concat(date_sub(date(now()), INTERVAL 1 DAY), ' 16:00:00'),'%Y-%m-%d %H:%i:%s') 
+                 and str_to_date(concat(date(now()), ' 16:00:00'),'%Y-%m-%d %H:%i:%s')
+    and user_name not in 
+      (
+       select user_name
+       from lsd_user_login_log
+       where result=''
+       )
+group by id,user_name,gmt_create
+union all 
+-- 登录未认证
+select a.id,b.user_name,'登录未认证' 状态,b.gmt_create 时间,date(now()) 获取时间
+from lsd_user a join lsd_user_login_log b on a.user_name=b.user_name
+where b.gmt_create between str_to_date(concat(date_sub(date(now()), INTERVAL 1 DAY), ' 16:00:00'),'%Y-%m-%d %H:%i:%s') 
+                   and str_to_date(concat(date(now()), ' 16:00:00'),'%Y-%m-%d %H:%i:%s') -- 取登录日期
+      and b.result='' 
+    and a.id not in 
+          (
+           SELECT user_id
+           from lsd_user_auth
+           where gmt_idnumber is not null 
+           )
+GROUP BY a.id,b.user_name,b.gmt_create
+union ALL 
+-- 强风控通过未发起借款
+select user_id,user_name,'强风控通过未发起借款' 状态,gmt_risk 时间,date(now()) 获取时间
+from lsd_user_auth a join lsd_user b on a.user_id=b.id
+where gmt_risk between str_to_date(concat(date_sub(date(now()), INTERVAL 1 DAY), ' 16:00:00'),'%Y-%m-%d %H:%i:%s') 
+               -- and str_to_date(concat(date_sub(date(now()), INTERVAL 1 DAY), ' 16:00:00'),'%Y-%m-%d %H:%i:%s') 
+               and str_to_date(concat(date(now()), ' 16:00:00'),'%Y-%m-%d %H:%i:%s')
+    and risk_status = 1
+    and user_id not in 
+      (
+       select user_id
+       from lsd_borrow_cash
+       )
+group by user_id,user_name,gmt_risk
+order by 状态,时间 desc
+;
