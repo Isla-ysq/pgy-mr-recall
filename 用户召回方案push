@@ -1,0 +1,42 @@
+-- 用户召回方案push
+-- 昨天11点至今日11点登录后还未完成认证
+select a.id,b.user_name,'登录未认证' 状态,'t' 推送期限,date(now()) 获取时间
+from lsd_user a join lsd_user_login_log b on a.user_name=b.user_name
+where b.gmt_create between str_to_date(concat(date_sub(date(now()), INTERVAL 1 DAY), ' 16:00:00'),'%Y-%m-%d %H:%i:%s') 
+                         and str_to_date(concat(date(now()), ' 16:00:00'),'%Y-%m-%d %H:%i:%s') -- 取登录日期
+      and b.result='' 
+    and a.id not in 
+          (
+           SELECT user_id
+           from lsd_user_auth
+           where gmt_idnumber is not null 
+           )
+GROUP BY a.id,b.user_name
+union all
+-- 4天前11点至3天前11点登录后还未完成认证
+select a.id,b.user_name,'登录未认证' 状态,'t-1' 推送期限,date(now()) 获取时间
+from lsd_user a join lsd_user_login_log b on a.user_name=b.user_name
+where b.gmt_create between str_to_date(concat(date_sub(date(now()), INTERVAL 2 DAY), ' 16:00:00'),'%Y-%m-%d %H:%i:%s') 
+                         and str_to_date(concat(date_sub(date(now()), INTERVAL 1 DAY), ' 16:00:00'),'%Y-%m-%d %H:%i:%s') -- 取登录日期
+      and b.result='' 
+    and a.id not in 
+          (
+           SELECT user_id
+           from lsd_user_auth
+           where gmt_idnumber is not null 
+           )
+GROUP BY a.id,b.user_name
+union all
+-- 8天前11点至7天前11点登录后还未完成认证
+select a.id,b.user_name,'登录未认证' 状态,'t-3' 推送期限,date(now()) 获取时间
+from lsd_user a join lsd_user_login_log b on a.user_name=b.user_name
+where b.gmt_create between str_to_date(concat(date_sub(date(now()), INTERVAL 4 DAY), ' 16:00:00'),'%Y-%m-%d %H:%i:%s') 
+                         and str_to_date(concat(date_sub(date(now()), INTERVAL 3 DAY), ' 16:00:00'),'%Y-%m-%d %H:%i:%s') -- 取登录日期
+      and b.result='' 
+    and a.id not in 
+          (
+           SELECT user_id
+           from lsd_user_auth
+           where gmt_idnumber is not null 
+           )
+GROUP BY a.id,b.user_name
