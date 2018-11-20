@@ -1,0 +1,18 @@
+-- 每小时的强风控情况
+SELECT date_format(add_time, '%H') hours
+       ,count(case when scene=22 then id end) 强风控请求数
+       ,count(case when scene=22 and resp_desc='请求成功' then id end) 强风控请求成功数
+       ,count(case when scene=22 and resp_desc='请求成功' and resp_data like '%"result":"10"%' then id end) 强风控通过数
+       ,(case when count(case when scene=22 and resp_desc='请求成功' then id end )=0 then 0 
+        else count(case when scene=22 and resp_desc='请求成功' and resp_data like '%"result":"10"%' then id end)/
+             count(case when scene=22 and resp_desc='请求成功' then id end ) end )*100 强风控通过率
+from arc_verify
+where add_time>=CURRENT_DATE
+group by date_format(add_time, '%H')
+;
+-- 当日强风控通过率
+SELECT (case when count(case when scene=22 and resp_desc='请求成功' then id end )=0 then 0 
+             else count(case when scene=22 and resp_desc='请求成功' and resp_data like '%"result":"10"%' then id end)/
+                  count(case when scene=22 and resp_desc='请求成功' then id end ) end )*100 通过率
+from arc_verify
+where add_time>=current_date 
